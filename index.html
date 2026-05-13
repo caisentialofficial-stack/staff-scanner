@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>🏷️ Staff QR Scanner</title>
+  <style>
+    * { font-family: system-ui, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #111827; color: white; padding: 20px; min-height: 100vh; }
+    .container { max-width: 500px; margin: 0 auto; text-align: center; }
+    h1 { font-size: 26px; margin-bottom: 10px; }
+    .staff-inputs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+    .staff-inputs input, .staff-inputs select {
+      padding: 12px; border-radius: 12px; border: none;
+      font-size: 16px; min-width: 140px;
+      background: #374151; color: white;
+    }
+    .scan-btn {
+      background: #3b82f6; color: white; padding: 15px 30px;
+      border: none; border-radius: 12px; font-size: 18px; cursor: pointer;
+      width: 100%; margin-top: 10px;
+    }
+    .scan-btn:hover { background: #2563eb; }
+    .stop-btn { background: #ef4444; margin-top: 10px; }
+    .stop-btn:hover { background: #dc2626; }
+    #scanner-container {
+      width: 100%; max-width: 400px; margin: 20px auto;
+      border-radius: 20px; overflow: hidden;
+      background: #000; display: none;
+    }
+    .result { margin-top: 20px; padding: 25px; border-radius: 20px; text-align: center; }
+    .success { background: #10b981; }
+    .error   { background: #ef4444; }
+    .warning { background: #f59e0b; }
+    .athlete-card {
+      background: rgba(255,255,255,0.1); padding: 20px;
+      border-radius: 16px; margin: 15px 0;
+    }
+    .status-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; margin: 15px 0;
+    }
+    .status-item { padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; background: #059669; }
+    .tab-bar { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+    .tab {
+      flex: 1; padding: 10px; border-radius: 10px; border: none;
+      background: #374151; color: white; cursor: pointer; font-size: 15px;
+    }
+    .tab.active { background: #3b82f6; }
+    .manual-box { background: #1f2937; border-radius: 16px; padding: 20px; margin: 20px 0; }
+    .manual-box input {
+      width: 100%; padding: 14px; border-radius: 10px; border: none;
+      background: #374151; color: white; font-size: 16px;
+      margin-bottom: 10px; box-sizing: border-box;
+    }
+    .search-result-card {
+      background: #1f2937; border-radius: 12px;
+      padding: 15px; margin: 10px 0; text-align: left;
+    }
+    .search-result-card h3 { margin-bottom: 5px; }
+    .search-result-card p { font-size: 14px; color: #9ca3af; margin: 3px 0; }
+    .checkin-btn {
+      background: #10b981; color: white; border: none;
+      padding: 10px 20px; border-radius: 10px;
+      font-size: 15px; cursor: pointer; margin-top: 10px; width: 100%;
+    }
+    .notice {
+      background: #1f2937; border: 1px solid #374151;
+      border-radius: 12px; padding: 15px; margin: 15px 0;
+      font-size: 14px; color: #9ca3af; line-height: 1.6;
+    }
+    .loading { color: #9ca3af; margin-top: 15px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏷️ Staff QR Scanner</h1>
+
+    <!-- ⚠️ REPLACE THIS WITH YOUR APPS SCRIPT WEB APP URL -->
+    <script>
+      const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_WEB_APP_URL_HERE';
+    </script>
+
+    <div class="staff-inputs">
+      <input type="text" id="staffId"   placeholder="Staff ID"  value="STAFF01">
+      <input type="text" id="staffName" placeholder="Your Name" value="Event Staff">
+      <select id="eventFilter">
+        <option value="All">All Events</option>
+        <option value="Boxing">Boxing</option>
+        <option value="Muay Thai">Muay Thai</option>
+        <option value="MMA">MMA</option>
+      </select>
+    </div>
+
+    <div class="tab-bar">
+      <button class="tab active" id="tabCamera" onclick="switchTab('camera')">📷 Camera</button>
+      <button class="tab"        id="tabManual" onclick="switchTab('manual')">⌨️ Manual</button>
+    </div>
+
+    <!-- Camera Tab -->
+    <div id="cameraTab">
+      <button class="scan-btn" onclick="startScan()">🎥 Start Camera</button>
+      <button class="scan-btn stop-btn" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop Scanner</button>
+      <div id="scanner-container"></div>
+    </div>
+
+    <!-- Manual Tab -->
+    <div id="manualTab" style="display:none;">
+      <div class="manual-box">
+        <p style="margin-bottom:15px; color:#9ca3af;">Search athlete by name</p>
+        <input type="text" id="manualSearch" placeholder="Enter athlete name...">
+        <button class="scan-btn" onclick="manualLookup()">🔍 Search</button>
+      </div>
+      <div id="searchResults"></div>
+    </div>
+
+    <div id="result" style="display:none;"></div>
+  </div>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    let html5QrCode      = null;
+    let scannerRunning   = false;
+    let foundAthletes    = [];
+    let currentStaffId   = '';
+    let currentStaffName = '';
+    let currentEventFilter = 'All';
+
+    function getStaffInfo() {
+      currentStaffId     = document.getElementById('staffId').value.trim();
+      currentStaffName   = document.getElementById('staffName').value.trim();
+      currentEventFilter = document.getElementById('eventFilter').value;
+      return currentStaffId && currentStaffName;
+    }
+
+    function switchTab(tab) {
+      document.getElementById('cameraTab').style.display = tab === 'camera' ? 'block' : 'none';
+      document.getElementById('manualTab').style.display = tab === 'manual' ? 'block' : 'none';
+      document.getElementById('tabCamera').classList.toggle('active', tab === 'camera');
+      document.getElementById('tabManual').classList.toggle('active', tab === 'manual');
+      if (tab !== 'camera') stopScan();
+    }
+
+    function startScan() {
+      if (!getStaffInfo()) {
+        alert('Please enter your Staff ID and Name first.');
+        return;
+      }
+
+      document.getElementById('result').style.display = 'none';
+      document.getElementById('result').innerHTML     = '';
+
+      if (html5QrCode) {
+        try { html5QrCode.clear(); } catch(e) {}
+      }
+      html5QrCode = new Html5Qrcode('scanner-container');
+
+      html5QrCode.start(
+        { facingMode: 'environment' },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScanSuccess,
+        onScanFailure
+      ).then(() => {
+        scannerRunning = true;
+        document.getElementById('stopBtn').style.display           = 'inline-block';
+        document.getElementById('scanner-container').style.display = 'block';
+      }).catch((err) => {
+        showResult({ valid: false, message: '📷 Camera error: ' + err });
+      });
+    }
+
+    function stopScan() {
+      if (html5QrCode && scannerRunning) {
+        html5QrCode.stop().then(() => {
+          scannerRunning = false;
+          html5QrCode.clear();
+          document.getElementById('stopBtn').style.display           = 'none';
+          document.getElementById('scanner-container').style.display = 'none';
+        }).catch(console.error);
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (!scannerRunning) return;
+      stopScan();
+      processQR(decodedText);
+    }
+
+    function onScanFailure() { /* silent */ }
+
+    // ---- APPS SCRIPT COMMUNICATION ----
+    // Since we're outside GAS we use fetch() instead of google.script.run
+
+    function callAppsScript(action, params) {
+      const url = new URL(APPS_SCRIPT_URL);
+      url.searchParams.set('action', action);
+      Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
+
+      return fetch(url.toString(), { method: 'GET' })
+        .then(r => r.json());
+    }
+
+    function processQR(qrData) {
+      getStaffInfo();
+      showLoading('Processing QR...');
+
+      callAppsScript('scanQR', {
+        qrData:      encodeURIComponent(qrData),
+        staffId:     currentStaffId,
+        staffName:   currentStaffName,
+        eventFilter: currentEventFilter
+      })
+      .then(showResult)
+      .catch(err => showResult({ valid: false, message: 'Error: ' + err.message }));
+    }
+
+    function manualLookup() {
+      const query = document.getElementById('manualSearch').value.trim();
+      if (!query) return;
+      if (!getStaffInfo()) {
+        alert('Please enter your Staff ID and Name first.');
+        return;
+      }
+
+      document.getElementById('searchResults').innerHTML = '<p class="loading">🔍 Searching...</p>';
+      foundAthletes = [];
+
+      callAppsScript('lookupAthlete', { name: query })
+        .then(athletes => {
+          if (!athletes || athletes.length === 0) {
+            document.getElementById('searchResults').innerHTML =
+              '<p style="color:#f87171; margin-top:10px;">No athletes found. Check the spelling.</p>';
+            return;
+          }
+
+          foundAthletes = athletes;
+          document.getElementById('searchResults').innerHTML = athletes.map((a, idx) => `
+            <div class="search-result-card">
+              <h3>${a.fullName}</h3>
+              <p>🥊 ${a.event} | ⚖️ ${a.weightClass}</p>
+              <p>🆔 ${a.athleteId}</p>
+              <p>Status: ${a.status}</p>
+              <button class="checkin-btn" onclick="checkInManual(${idx})">✅ Check In</button>
+            </div>
+          `).join('');
+        })
+        .catch(() => {
+          document.getElementById('searchResults').innerHTML =
+            '<p style="color:#f87171;">Search failed. Try again.</p>';
+        });
+    }
+
+    function checkInManual(idx) {
+      const athlete = foundAthletes[idx];
+      if (!athlete) return;
+      getStaffInfo();
+
+      document.getElementById('searchResults').innerHTML =
+        '<p class="loading">⏳ Checking in ' + athlete.fullName + '...</p>';
+
+      callAppsScript('scanQR', {
+        qrData:      encodeURIComponent(athlete.qrData),
+        staffId:     currentStaffId,
+        staffName:   currentStaffName,
+        eventFilter: currentEventFilter
+      })
+      .then(result => {
+        showResult(result);
+        document.getElementById('searchResults').innerHTML = '';
+      })
+      .catch(err => showResult({ valid: false, message: err.message }));
+    }
+
+    document.getElementById('manualSearch').addEventListener('keydown', e => {
+      if (e.key === 'Enter') manualLookup();
+    });
+
+    function showLoading(msg) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = `<p class="loading">⏳ ${msg}</p>`;
+    }
+
+    function showResult(result) {
+      const resultDiv = document.getElementById('result');
+      resultDiv.style.display = 'block';
+
+      if (!result.valid) {
+        if (result.alreadyCheckedIn) {
+          resultDiv.innerHTML = `
+            <div class="result warning">
+              <h2>⚠️ ALREADY CHECKED IN</h2>
+              <div class="athlete-card">
+                <h3>${result.fullName || 'Unknown'}</h3>
+                <p>ID: ${result.athleteId || 'N/A'}</p>
+                <p>Time: ${result.checkinTime ? new Date(result.checkinTime).toLocaleString() : 'Earlier'}</p>
+              </div>
+              <button class="scan-btn" onclick="resetScanner()">🔄 Next Athlete</button>
+            </div>`;
+        } else {
+          resultDiv.innerHTML = `
+            <div class="result error">
+              <h2>❌ ${result.message || 'Something went wrong'}</h2>
+              <button class="scan-btn" onclick="resetScanner()">🔄 Try Again</button>
+            </div>`;
+        }
+      } else {
+        resultDiv.innerHTML = `
+          <div class="result success">
+            <h1>✅ CHECKED IN!</h1>
+            <div class="athlete-card">
+              <h2>${result.fullName}</h2>
+              <p>ID: ${result.athleteId}</p>
+              <p>Team: ${result.team}</p>
+              <p>${result.weightClass} | ${result.division}</p>
+              <div class="status-grid">
+                <div class="status-item">Waiver ✅</div>
+                <div class="status-item">Medical ✅</div>
+                <div class="status-item">Consent ✅</div>
+                <div class="status-item">Checked In ✅</div>
+              </div>
+            </div>
+            <p>By: ${result.staffName} (${result.staffId})</p>
+            <p>🕐 ${new Date().toLocaleString()}</p>
+            <button class="scan-btn" onclick="resetScanner()">🎉 Next Athlete</button>
+          </div>`;
+      }
+    }
+
+    function resetScanner() {
+      document.getElementById('result').style.display    = 'none';
+      document.getElementById('result').innerHTML        = '';
+      document.getElementById('searchResults').innerHTML = '';
+      document.getElementById('manualSearch').value      = '';
+      foundAthletes = [];
+    }
+  </script>
+</body>
+</html>
