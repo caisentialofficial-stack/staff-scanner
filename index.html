@@ -2,30 +2,42 @@
 <html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>🏷️ Staff QR Scanner</title>
+  <title>🏷️ Staff Scanner</title>
   <style>
     * { font-family: system-ui, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111827; color: white; padding: 20px; min-height: 100vh; }
     .container { max-width: 500px; margin: 0 auto; text-align: center; }
-    h1 { font-size: 26px; margin-bottom: 10px; }
-    .staff-inputs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 20px 0; }
+    h1 { font-size: 26px; margin-bottom: 5px; }
+    .mode-bar { display: flex; gap: 10px; margin: 15px 0; }
+    .mode-btn {
+      flex: 1; padding: 12px; border: none; border-radius: 12px;
+      font-size: 15px; font-weight: 700; cursor: pointer; color: white;
+    }
+    .mode-checkin { background: #3b82f6; }
+    .mode-medical { background: #ef4444; }
+    .mode-btn.active { opacity: 1; transform: scale(1.03); }
+    .mode-btn:not(.active) { opacity: 0.5; }
+    .staff-inputs { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin: 15px 0; }
     .staff-inputs input, .staff-inputs select {
       padding: 12px; border-radius: 12px; border: none;
-      font-size: 16px; min-width: 140px;
-      background: #374151; color: white;
+      font-size: 16px; min-width: 140px; background: #374151; color: white;
     }
     .scan-btn {
-      background: #3b82f6; color: white; padding: 15px 30px;
-      border: none; border-radius: 12px; font-size: 18px; cursor: pointer;
+      color: white; padding: 15px 30px; border: none;
+      border-radius: 12px; font-size: 18px; cursor: pointer;
       width: 100%; margin-top: 10px;
     }
-    .scan-btn:hover { background: #2563eb; }
-    .stop-btn { background: #ef4444; }
-    .stop-btn:hover { background: #dc2626; }
+    .btn-blue  { background: #3b82f6; }
+    .btn-blue:hover  { background: #2563eb; }
+    .btn-red   { background: #ef4444; }
+    .btn-red:hover   { background: #dc2626; }
+    .btn-gray  { background: #6b7280; }
+    .btn-gray:hover  { background: #4b5563; }
+    .btn-green { background: #10b981; }
+    .btn-green:hover { background: #059669; }
     #scanner-container {
       width: 100%; max-width: 400px; margin: 20px auto;
-      border-radius: 20px; overflow: hidden;
-      background: #000; display: none;
+      border-radius: 20px; overflow: hidden; background: #000; display: none;
     }
     .result { margin-top: 20px; padding: 25px; border-radius: 20px; text-align: center; }
     .success { background: #10b981; }
@@ -35,20 +47,15 @@
       background: rgba(255,255,255,0.1); padding: 20px;
       border-radius: 16px; margin: 15px 0;
     }
-    .status-grid {
-      display: grid; grid-template-columns: repeat(2, 1fr);
-      gap: 10px; margin: 15px 0;
-    }
-    .status-item {
-      padding: 12px; border-radius: 10px;
-      font-weight: 600; font-size: 14px; background: #059669;
-    }
-    .tab-bar { display: flex; gap: 10px; justify-content: center; margin: 20px 0; }
+    .status-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin: 15px 0; }
+    .status-item { padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; background: #059669; }
+    .tab-bar { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
     .tab {
       flex: 1; padding: 10px; border-radius: 10px; border: none;
       background: #374151; color: white; cursor: pointer; font-size: 15px;
     }
     .tab.active { background: #3b82f6; }
+    .tab.active.medical { background: #ef4444; }
     .manual-box { background: #1f2937; border-radius: 16px; padding: 20px; margin: 20px 0; }
     .manual-box input {
       width: 100%; padding: 14px; border-radius: 10px; border: none;
@@ -60,21 +67,48 @@
       padding: 15px; margin: 10px 0; text-align: left;
     }
     .search-result-card h3 { margin-bottom: 5px; }
-    .search-result-card p { font-size: 14px; color: #9ca3af; margin: 3px 0; }
+    .search-result-card p  { font-size: 14px; color: #9ca3af; margin: 3px 0; }
     .checkin-btn {
-      background: #10b981; color: white; border: none;
-      padding: 10px 20px; border-radius: 10px;
-      font-size: 15px; cursor: pointer; margin-top: 10px; width: 100%;
+      color: white; border: none; padding: 10px 20px;
+      border-radius: 10px; font-size: 15px; cursor: pointer;
+      margin-top: 10px; width: 100%;
     }
-    .checkin-btn:hover { background: #059669; }
-    .loading { color: #9ca3af; margin-top: 15px; font-size: 16px; }
+    .medical-form-box { background: #1f2937; border-radius: 16px; padding: 20px; margin: 20px 0; text-align: left; }
+    .medical-form-box h3 { margin-bottom: 15px; color: #f472b6; }
+    .form-group { margin: 12px 0; }
+    .form-group label { display: block; font-size: 13px; color: #9ca3af; margin-bottom: 5px; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 12px; border-radius: 10px; border: none;
+      background: #374151; color: white; font-size: 15px; box-sizing: border-box;
+    }
+    .form-group textarea { height: 70px; resize: vertical; }
+    .weight-result { padding: 12px; border-radius: 10px; margin: 10px 0; font-weight: 700; text-align: center; }
+    .w-ok      { background: #065f46; color: #34d399; }
+    .w-over    { background: #7f1d1d; color: #f87171; }
+    .w-under   { background: #78350f; color: #fbbf24; }
+    .w-pending { background: #374151; color: #9ca3af; }
+    .clearance-row { display: flex; gap: 10px; margin: 15px 0; }
+    .clear-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; }
+    .clear-yes { background: #10b981; color: white; }
+    .clear-no  { background: #ef4444; color: white; }
+    .loading { color: #9ca3af; margin-top: 15px; font-size: 16px; text-align: center; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🏷️ Staff QR Scanner</h1>
+    <h1>🏟️ Event Staff Portal</h1>
+    <p style="color:#9ca3af; margin-bottom:15px; font-size:14px;">Select your role below</p>
 
-    <div class="staff-inputs">
+    <div class="mode-bar">
+      <button class="mode-btn mode-checkin active" id="modeCheckin" onclick="setMode('checkin')">
+        🏷️ Check-in Staff
+      </button>
+      <button class="mode-btn mode-medical" id="modeMedical" onclick="setMode('medical')">
+        🏥 Medical Team
+      </button>
+    </div>
+
+    <div class="staff-inputs" id="checkinInputs">
       <input type="text" id="staffId"   placeholder="Staff ID"  value="STAFF01">
       <input type="text" id="staffName" placeholder="Your Name" value="Event Staff">
       <select id="eventFilter">
@@ -85,6 +119,10 @@
       </select>
     </div>
 
+    <div class="staff-inputs" id="medicalInputs" style="display:none;">
+      <input type="text" id="medStaffName" placeholder="Medical Staff Name" value="Medical Staff">
+    </div>
+
     <div class="tab-bar">
       <button class="tab active" id="tabCamera" onclick="switchTab('camera')">📷 Camera</button>
       <button class="tab"        id="tabManual" onclick="switchTab('manual')">⌨️ Manual</button>
@@ -92,19 +130,53 @@
 
     <!-- Camera Tab -->
     <div id="cameraTab">
-      <button class="scan-btn" onclick="startScan()">🎥 Start Camera</button>
-      <button class="scan-btn stop-btn" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop</button>
+      <button class="scan-btn btn-blue" id="startBtn" onclick="startScan()">🎥 Start Camera</button>
+      <button class="scan-btn btn-gray" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop</button>
       <div id="scanner-container"></div>
     </div>
 
     <!-- Manual Tab -->
     <div id="manualTab" style="display:none;">
       <div class="manual-box">
-        <p style="margin-bottom:15px; color:#9ca3af;">Search athlete by name</p>
         <input type="text" id="manualSearch" placeholder="Enter athlete name...">
-        <button class="scan-btn" onclick="manualLookup()">🔍 Search</button>
+        <button class="scan-btn btn-blue" id="searchBtn" onclick="manualLookup()">🔍 Search</button>
       </div>
       <div id="searchResults"></div>
+    </div>
+
+    <!-- Medical Form (shown after athlete selected in medical mode) -->
+    <div id="medicalFormBox" style="display:none;">
+      <div class="medical-form-box">
+        <h3>🏥 Medical Assessment</h3>
+        <div id="athleteInfo" style="margin-bottom:15px; padding:12px; background:#0f172a; border-radius:10px;">
+        </div>
+
+        <div class="form-group">
+          <label>Actual Weight (KG) *</label>
+          <input type="number" id="actualWeight" placeholder="e.g. 58.5" step="0.1" oninput="checkWeightLive()">
+        </div>
+        <div class="weight-result w-pending" id="weightResult">⚖️ Enter weight to check</div>
+
+        <div class="form-group">
+          <label>Blood Pressure *</label>
+          <input type="text" id="bloodPressure" placeholder="e.g. 120/80">
+        </div>
+        <div class="form-group">
+          <label>Heart Rate (BPM)</label>
+          <input type="number" id="heartRate" placeholder="e.g. 72">
+        </div>
+        <div class="form-group">
+          <label>Medical Notes</label>
+          <textarea id="medNotes" placeholder="Observations..."></textarea>
+        </div>
+
+        <p style="font-weight:600; margin:10px 0;">Medical Clearance *</p>
+        <div class="clearance-row">
+          <button class="clear-btn clear-yes" id="btnYes" onclick="setClearance(true)">✅ Clear to Fight</button>
+          <button class="clear-btn clear-no"  id="btnNo"  onclick="setClearance(false)">❌ Not Cleared</button>
+        </div>
+        <button class="scan-btn btn-red" id="saveMedBtn" onclick="saveMedical()" disabled>💾 Save Record</button>
+      </div>
     </div>
 
     <div id="result" style="display:none;"></div>
@@ -117,9 +189,28 @@
     let html5QrCode        = null;
     let scannerRunning     = false;
     let foundAthletes      = [];
+    let currentAthlete     = null;
+    let isCleared          = null;
+    let currentMode        = 'checkin';
     let currentStaffId     = '';
     let currentStaffName   = '';
     let currentEventFilter = 'All';
+
+    function setMode(mode) {
+      currentMode = mode;
+      document.getElementById('modeCheckin').classList.toggle('active', mode === 'checkin');
+      document.getElementById('modeMedical').classList.toggle('active', mode === 'medical');
+      document.getElementById('checkinInputs').style.display = mode === 'checkin' ? 'flex' : 'none';
+      document.getElementById('medicalInputs').style.display = mode === 'medical' ? 'flex' : 'none';
+      document.getElementById('medicalFormBox').style.display = 'none';
+      document.getElementById('result').style.display         = 'none';
+      document.getElementById('searchResults').innerHTML       = '';
+      document.getElementById('startBtn').className =
+        'scan-btn ' + (mode === 'checkin' ? 'btn-blue' : 'btn-red');
+      document.getElementById('searchBtn').className =
+        'scan-btn ' + (mode === 'checkin' ? 'btn-blue' : 'btn-red');
+      stopScan();
+    }
 
     function getStaffInfo() {
       currentStaffId     = document.getElementById('staffId').value.trim();
@@ -137,30 +228,22 @@
     }
 
     function startScan() {
-      if (!getStaffInfo()) {
-        alert('Please enter your Staff ID and Name first.');
-        return;
-      }
-      document.getElementById('result').style.display = 'none';
-      document.getElementById('result').innerHTML     = '';
+      document.getElementById('result').style.display         = 'none';
+      document.getElementById('medicalFormBox').style.display = 'none';
 
-      if (html5QrCode) {
-        try { html5QrCode.clear(); } catch(e) {}
-      }
+      if (html5QrCode) { try { html5QrCode.clear(); } catch(e) {} }
       html5QrCode = new Html5Qrcode('scanner-container');
 
       html5QrCode.start(
         { facingMode: 'environment' },
         { fps: 10, qrbox: { width: 250, height: 250 } },
         onScanSuccess,
-        onScanFailure
+        () => {}
       ).then(() => {
         scannerRunning = true;
         document.getElementById('stopBtn').style.display           = 'inline-block';
         document.getElementById('scanner-container').style.display = 'block';
-      }).catch((err) => {
-        showResult({ valid: false, message: '📷 Camera error: ' + err });
-      });
+      }).catch(err => showResult({ valid: false, message: '📷 Camera error: ' + err }));
     }
 
     function stopScan() {
@@ -177,49 +260,46 @@
     function onScanSuccess(decodedText) {
       if (!scannerRunning) return;
       stopScan();
-      processQR(decodedText);
+      if (currentMode === 'checkin') {
+        processCheckinQR(decodedText);
+      } else {
+        processMedicalQR(decodedText);
+      }
     }
 
-    function onScanFailure() { /* silent */ }
-
-    // JSONP — bypasses CORS for Google Apps Script
+    // ---- JSONP ----
     function callAppsScript(params, callback) {
       const callbackName = 'gasCallback_' + Date.now();
       const url          = new URL(APPS_SCRIPT_URL);
-
       Object.keys(params).forEach(k => url.searchParams.set(k, params[k]));
       url.searchParams.set('callback', callbackName);
-
       let script;
-
       const timeout = setTimeout(() => {
-        showResult({ valid: false, message: '❌ Request timed out. Check your network and Apps Script URL.' });
+        showResult({ valid: false, message: '❌ Request timed out.' });
         delete window[callbackName];
         if (script) script.remove();
       }, 15000);
-
       window[callbackName] = function(data) {
         clearTimeout(timeout);
         delete window[callbackName];
         if (script) script.remove();
         callback(data);
       };
-
       script = document.createElement('script');
       script.src = url.toString();
       script.onerror = function() {
         clearTimeout(timeout);
         delete window[callbackName];
-        showResult({ valid: false, message: '❌ Failed to reach server. Check your Apps Script URL.' });
+        showResult({ valid: false, message: '❌ Failed to reach server.' });
         if (script) script.remove();
       };
       document.head.appendChild(script);
     }
 
-    function processQR(qrData) {
+    // ---- CHECK-IN ----
+    function processCheckinQR(qrData) {
       getStaffInfo();
-      showLoading('Processing QR...');
-
+      showLoading('Processing check-in...');
       callAppsScript({
         action:      'scanQR',
         qrData:      encodeURIComponent(qrData),
@@ -229,13 +309,125 @@
       }, showResult);
     }
 
+    // ---- MEDICAL ----
+    function processMedicalQR(qrData) {
+      showLoading('Loading athlete...');
+      callAppsScript({
+        action:   'scanMedical',
+        qrData:   encodeURIComponent(qrData)
+      }, showMedicalForm);
+    }
+
+    function showMedicalForm(data) {
+      document.getElementById('result').style.display = 'none';
+      if (!data.found) {
+        showResult({ valid: false, message: data.message || 'Athlete not found.' });
+        return;
+      }
+      currentAthlete = data;
+      isCleared      = null;
+
+      document.getElementById('athleteInfo').innerHTML = `
+        <strong>${data.fullName}</strong><br>
+        <span style="color:#9ca3af; font-size:13px;">
+          ${data.event} | ${data.weightClass}<br>
+          Check-in: ${data.checkinStatus}
+        </span>
+      `;
+
+      document.getElementById('actualWeight').value  = '';
+      document.getElementById('bloodPressure').value = '';
+      document.getElementById('heartRate').value     = '';
+      document.getElementById('medNotes').value      = '';
+      document.getElementById('weightResult').className   = 'weight-result w-pending';
+      document.getElementById('weightResult').textContent = '⚖️ Enter weight to check';
+      document.getElementById('btnYes').style.opacity = '1';
+      document.getElementById('btnNo').style.opacity  = '1';
+      document.getElementById('saveMedBtn').disabled  = true;
+      document.getElementById('medicalFormBox').style.display = 'block';
+      document.getElementById('medicalFormBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function checkWeightLive() {
+      const actual      = parseFloat(document.getElementById('actualWeight').value);
+      const weightClass = currentAthlete ? currentAthlete.weightClass : '';
+      const resultDiv   = document.getElementById('weightResult');
+      if (!actual || !weightClass) {
+        resultDiv.className   = 'weight-result w-pending';
+        resultDiv.textContent = '⚖️ Enter weight to check';
+        return;
+      }
+      const match = weightClass.match(/(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*KG/i);
+      if (!match) return;
+      const minKg = parseFloat(match[1]);
+      const maxKg = parseFloat(match[2]);
+      if (actual < minKg) {
+        resultDiv.className   = 'weight-result w-under';
+        resultDiv.textContent = '⚠️ UNDERWEIGHT — ' + actual + 'KG (min ' + minKg + 'KG)';
+      } else if (actual > maxKg) {
+        resultDiv.className   = 'weight-result w-over';
+        resultDiv.textContent = '❌ OVERWEIGHT — ' + actual + 'KG (max ' + maxKg + 'KG)';
+      } else {
+        resultDiv.className   = 'weight-result w-ok';
+        resultDiv.textContent = '✅ WEIGHT OK — ' + actual + 'KG (' + minKg + '-' + maxKg + 'KG)';
+      }
+    }
+
+    function setClearance(cleared) {
+      isCleared = cleared;
+      document.getElementById('btnYes').style.opacity    = cleared ? '1' : '0.4';
+      document.getElementById('btnNo').style.opacity     = cleared ? '0.4' : '1';
+      document.getElementById('saveMedBtn').disabled     = false;
+    }
+
+    function saveMedical() {
+      if (isCleared === null) { alert('Please select clearance status.'); return; }
+      if (!document.getElementById('actualWeight').value)  { alert('Please enter actual weight.'); return; }
+      if (!document.getElementById('bloodPressure').value) { alert('Please enter blood pressure.'); return; }
+
+      document.getElementById('saveMedBtn').disabled    = true;
+      document.getElementById('saveMedBtn').textContent = '⏳ Saving...';
+
+      const medData = {
+        athleteId:    currentAthlete.athleteId,
+        fullName:     currentAthlete.fullName,
+        event:        currentAthlete.event,
+        weightClass:  currentAthlete.weightClass,
+        actualWeight: document.getElementById('actualWeight').value,
+        bloodPressure: document.getElementById('bloodPressure').value,
+        heartRate:    document.getElementById('heartRate').value || '—',
+        medicalNotes: document.getElementById('medNotes').value,
+        cleared:      isCleared,
+        clearedBy:    document.getElementById('medStaffName').value,
+        staffName:    document.getElementById('medStaffName').value
+      };
+
+      callAppsScript({
+        action:   'saveMedical',
+        medData:  encodeURIComponent(JSON.stringify(medData))
+      }, function(result) {
+        document.getElementById('medicalFormBox').style.display = 'none';
+        document.getElementById('saveMedBtn').textContent = '💾 Save Record';
+
+        if (result.success) {
+          const wc = result.weightCheck;
+          showResult({
+            valid:     true,
+            isMedical: true,
+            fullName:  currentAthlete.fullName,
+            cleared:   result.cleared,
+            wc:        wc
+          });
+        } else {
+          showResult({ valid: false, message: '❌ Failed to save medical record.' });
+        }
+      });
+    }
+
+    // ---- MANUAL LOOKUP ----
     function manualLookup() {
       const query = document.getElementById('manualSearch').value.trim();
       if (!query) return;
-      if (!getStaffInfo()) {
-        alert('Please enter your Staff ID and Name first.');
-        return;
-      }
 
       document.getElementById('searchResults').innerHTML = '<p class="loading">🔍 Searching...</p>';
       foundAthletes = [];
@@ -245,7 +437,7 @@
         function(athletes) {
           if (!athletes || athletes.length === 0) {
             document.getElementById('searchResults').innerHTML =
-              '<p style="color:#f87171; margin-top:10px;">No athletes found. Check the spelling.</p>';
+              '<p style="color:#f87171; margin-top:10px;">No athletes found.</p>';
             return;
           }
           foundAthletes = athletes;
@@ -255,7 +447,10 @@
               <p>🥊 ${a.event} | ⚖️ ${a.weightClass}</p>
               <p>🆔 ${a.athleteId}</p>
               <p>Status: ${a.status}</p>
-              <button class="checkin-btn" onclick="checkInManual(${idx})">✅ Check In</button>
+              <button class="checkin-btn ${currentMode === 'checkin' ? 'btn-blue' : 'btn-red'}"
+                onclick="${currentMode === 'checkin' ? 'checkInManual' : 'medicalManual'}(${idx})">
+                ${currentMode === 'checkin' ? '✅ Check In' : '🏥 Medical Check'}
+              </button>
             </div>
           `).join('');
         }
@@ -266,10 +461,8 @@
       const athlete = foundAthletes[idx];
       if (!athlete) return;
       getStaffInfo();
-
       document.getElementById('searchResults').innerHTML =
         '<p class="loading">⏳ Checking in ' + athlete.fullName + '...</p>';
-
       callAppsScript({
         action:      'scanQR',
         qrData:      encodeURIComponent(athlete.qrData),
@@ -282,23 +475,52 @@
       });
     }
 
+    function medicalManual(idx) {
+      const athlete = foundAthletes[idx];
+      if (!athlete) return;
+      document.getElementById('searchResults').innerHTML =
+        '<p class="loading">⏳ Loading ' + athlete.fullName + '...</p>';
+      callAppsScript({
+        action: 'scanMedical',
+        qrData: encodeURIComponent(athlete.qrData)
+      }, function(data) {
+        document.getElementById('searchResults').innerHTML = '';
+        showMedicalForm(data);
+      });
+    }
+
     document.getElementById('manualSearch').addEventListener('keydown', e => {
       if (e.key === 'Enter') manualLookup();
     });
 
     function showLoading(msg) {
-      const resultDiv         = document.getElementById('result');
-      resultDiv.style.display = 'block';
-      resultDiv.innerHTML     = '<p class="loading">⏳ ' + msg + '</p>';
+      const r = document.getElementById('result');
+      r.style.display = 'block';
+      r.innerHTML = '<p class="loading">⏳ ' + msg + '</p>';
     }
 
     function showResult(result) {
-      const resultDiv         = document.getElementById('result');
-      resultDiv.style.display = 'block';
+      const r = document.getElementById('result');
+      r.style.display = 'block';
 
+      // Medical result
+      if (result.isMedical) {
+        r.innerHTML = `
+          <div class="result ${result.cleared ? 'success' : 'error'}">
+            <h2>${result.cleared ? '✅ CLEARED TO FIGHT' : '❌ NOT CLEARED'}</h2>
+            <div class="athlete-card">
+              <h3>${result.fullName}</h3>
+              <p style="font-size:18px; margin:10px 0;">${result.wc.status}</p>
+            </div>
+            <button class="scan-btn btn-blue" onclick="resetAll()">🔄 Next Athlete</button>
+          </div>`;
+        return;
+      }
+
+      // Check-in result
       if (!result.valid) {
         if (result.alreadyCheckedIn) {
-          resultDiv.innerHTML = `
+          r.innerHTML = `
             <div class="result warning">
               <h2>⚠️ ALREADY CHECKED IN</h2>
               <div class="athlete-card">
@@ -306,17 +528,17 @@
                 <p>ID: ${result.athleteId || 'N/A'}</p>
                 <p>Time: ${result.checkinTime ? new Date(result.checkinTime).toLocaleString() : 'Earlier'}</p>
               </div>
-              <button class="scan-btn" onclick="resetScanner()">🔄 Next Athlete</button>
+              <button class="scan-btn btn-blue" onclick="resetAll()">🔄 Next Athlete</button>
             </div>`;
         } else {
-          resultDiv.innerHTML = `
+          r.innerHTML = `
             <div class="result error">
               <h2>❌ ${result.message || 'Something went wrong'}</h2>
-              <button class="scan-btn" onclick="resetScanner()">🔄 Try Again</button>
+              <button class="scan-btn btn-blue" onclick="resetAll()">🔄 Try Again</button>
             </div>`;
         }
       } else {
-        resultDiv.innerHTML = `
+        r.innerHTML = `
           <div class="result success">
             <h1>✅ CHECKED IN!</h1>
             <div class="athlete-card">
@@ -334,17 +556,19 @@
             </div>
             <p>By: ${result.staffName} (${result.staffId})</p>
             <p>🕐 ${new Date().toLocaleString()}</p>
-            <button class="scan-btn" onclick="resetScanner()">🎉 Next Athlete</button>
+            <button class="scan-btn btn-blue" onclick="resetAll()">🎉 Next Athlete</button>
           </div>`;
       }
     }
 
-    function resetScanner() {
-      document.getElementById('result').style.display    = 'none';
-      document.getElementById('result').innerHTML        = '';
-      document.getElementById('searchResults').innerHTML = '';
-      document.getElementById('manualSearch').value      = '';
-      foundAthletes = [];
+    function resetAll() {
+      document.getElementById('result').style.display         = 'none';
+      document.getElementById('medicalFormBox').style.display = 'none';
+      document.getElementById('searchResults').innerHTML       = '';
+      document.getElementById('manualSearch').value            = '';
+      foundAthletes  = [];
+      currentAthlete = null;
+      isCleared      = null;
     }
   </script>
 </body>
