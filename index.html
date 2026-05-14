@@ -3,6 +3,15 @@
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>🏷️ Staff Scanner</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#111827">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Staff Scanner">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
   <style>
     * { font-family: system-ui, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
     body { background: #111827; color: white; padding: 20px; min-height: 100vh; }
@@ -144,7 +153,7 @@
       <div id="searchResults"></div>
     </div>
 
-    <!-- Medical Form (shown after athlete selected in medical mode) -->
+    <!-- Medical Form -->
     <div id="medicalFormBox" style="display:none;">
       <div class="medical-form-box">
         <h3>🏥 Medical Assessment</h3>
@@ -267,7 +276,6 @@
       }
     }
 
-    // ---- JSONP ----
     function callAppsScript(params, callback) {
       const callbackName = 'gasCallback_' + Date.now();
       const url          = new URL(APPS_SCRIPT_URL);
@@ -296,7 +304,6 @@
       document.head.appendChild(script);
     }
 
-    // ---- CHECK-IN ----
     function processCheckinQR(qrData) {
       getStaffInfo();
       showLoading('Processing check-in...');
@@ -309,7 +316,6 @@
       }, showResult);
     }
 
-    // ---- MEDICAL ----
     function processMedicalQR(qrData) {
       showLoading('Loading athlete...');
       callAppsScript({
@@ -375,9 +381,9 @@
 
     function setClearance(cleared) {
       isCleared = cleared;
-      document.getElementById('btnYes').style.opacity    = cleared ? '1' : '0.4';
-      document.getElementById('btnNo').style.opacity     = cleared ? '0.4' : '1';
-      document.getElementById('saveMedBtn').disabled     = false;
+      document.getElementById('btnYes').style.opacity = cleared ? '1' : '0.4';
+      document.getElementById('btnNo').style.opacity  = cleared ? '0.4' : '1';
+      document.getElementById('saveMedBtn').disabled  = false;
     }
 
     function saveMedical() {
@@ -389,34 +395,33 @@
       document.getElementById('saveMedBtn').textContent = '⏳ Saving...';
 
       const medData = {
-        athleteId:    currentAthlete.athleteId,
-        fullName:     currentAthlete.fullName,
-        event:        currentAthlete.event,
-        weightClass:  currentAthlete.weightClass,
-        actualWeight: document.getElementById('actualWeight').value,
+        athleteId:     currentAthlete.athleteId,
+        fullName:      currentAthlete.fullName,
+        event:         currentAthlete.event,
+        weightClass:   currentAthlete.weightClass,
+        actualWeight:  document.getElementById('actualWeight').value,
         bloodPressure: document.getElementById('bloodPressure').value,
-        heartRate:    document.getElementById('heartRate').value || '—',
-        medicalNotes: document.getElementById('medNotes').value,
-        cleared:      isCleared,
-        clearedBy:    document.getElementById('medStaffName').value,
-        staffName:    document.getElementById('medStaffName').value
+        heartRate:     document.getElementById('heartRate').value || '—',
+        medicalNotes:  document.getElementById('medNotes').value,
+        cleared:       isCleared,
+        clearedBy:     document.getElementById('medStaffName').value,
+        staffName:     document.getElementById('medStaffName').value
       };
 
       callAppsScript({
-        action:   'saveMedical',
-        medData:  encodeURIComponent(JSON.stringify(medData))
+        action:  'saveMedical',
+        medData: encodeURIComponent(JSON.stringify(medData))
       }, function(result) {
         document.getElementById('medicalFormBox').style.display = 'none';
         document.getElementById('saveMedBtn').textContent = '💾 Save Record';
 
         if (result.success) {
-          const wc = result.weightCheck;
           showResult({
             valid:     true,
             isMedical: true,
             fullName:  currentAthlete.fullName,
             cleared:   result.cleared,
-            wc:        wc
+            wc:        result.weightCheck
           });
         } else {
           showResult({ valid: false, message: '❌ Failed to save medical record.' });
@@ -424,7 +429,6 @@
       });
     }
 
-    // ---- MANUAL LOOKUP ----
     function manualLookup() {
       const query = document.getElementById('manualSearch').value.trim();
       if (!query) return;
@@ -503,7 +507,6 @@
       const r = document.getElementById('result');
       r.style.display = 'block';
 
-      // Medical result
       if (result.isMedical) {
         r.innerHTML = `
           <div class="result ${result.cleared ? 'success' : 'error'}">
@@ -517,7 +520,6 @@
         return;
       }
 
-      // Check-in result
       if (!result.valid) {
         if (result.alreadyCheckedIn) {
           r.innerHTML = `
@@ -569,6 +571,15 @@
       foundAthletes  = [];
       currentAthlete = null;
       isCleared      = null;
+    }
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/staff-scanner/service-worker.js')
+          .then(reg => console.log('SW registered'))
+          .catch(err => console.log('SW error:', err));
+      });
     }
   </script>
 </body>
