@@ -11,80 +11,64 @@
   <link rel="apple-touch-icon" href="icon-192.png">
   <style>
     * { font-family: system-ui, sans-serif; margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: #111827; color: white; padding: 20px; min-height: 100vh; }
-    .container { max-width: 500px; margin: 0 auto; text-align: center; }
+    body { background: #111827; color: white; min-height: 100vh; }
 
     /* LOGIN SCREEN */
     #loginScreen {
       display: flex; flex-direction: column; align-items: center;
-      justify-content: center; min-height: 100vh; padding: 20px;
+      justify-content: center; min-height: 100vh; padding: 30px 20px;
     }
     .logo-img {
-      width: 180px; height: 180px; object-fit: contain;
+      width: 160px; height: 160px; object-fit: contain;
       border-radius: 20px; margin-bottom: 20px;
     }
     .event-name {
-      font-size: 22px; font-weight: 800; color: #f59e0b;
-      letter-spacing: 1px; margin-bottom: 6px;
+      font-size: 20px; font-weight: 800; color: #f59e0b;
+      letter-spacing: 1px; margin-bottom: 6px; text-align: center;
     }
     .event-sub {
-      font-size: 14px; color: #9ca3af; margin-bottom: 40px;
-    }
-    .pin-label {
-      font-size: 14px; color: #9ca3af; margin-bottom: 12px;
-    }
-    .pin-input {
-      width: 200px; padding: 16px; text-align: center;
-      font-size: 28px; letter-spacing: 8px; border: 2px solid #374151;
-      border-radius: 16px; background: #1f2937; color: white;
-      outline: none; margin-bottom: 16px;
-    }
-    .pin-input:focus { border-color: #f59e0b; }
-    .pin-btn {
-      width: 200px; padding: 16px; background: #f59e0b;
-      border: none; border-radius: 16px; font-size: 18px;
-      font-weight: 700; color: #111827; cursor: pointer;
-      margin-bottom: 12px;
-    }
-    .pin-btn:hover { background: #d97706; }
-    .pin-error {
-      color: #f87171; font-size: 14px; margin-top: 8px;
-      display: none;
+      font-size: 13px; color: #6b7280; margin-bottom: 36px; text-align: center;
     }
     .pin-dots {
-      display: flex; gap: 12px; justify-content: center;
-      margin-bottom: 24px;
+      display: flex; gap: 14px; justify-content: center; margin-bottom: 28px;
     }
     .pin-dot {
-      width: 14px; height: 14px; border-radius: 50%;
-      border: 2px solid #374151; background: transparent;
-      transition: all 0.2s;
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 2px solid #4b5563; background: transparent;
+      transition: all 0.15s;
     }
     .pin-dot.filled { background: #f59e0b; border-color: #f59e0b; }
     .numpad {
-      display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 12px; width: 240px; margin: 0 auto;
+      display: grid; grid-template-columns: repeat(3, 80px);
+      gap: 12px; margin: 0 auto;
     }
     .num-btn {
-      padding: 18px; background: #1f2937; border: none;
-      border-radius: 14px; font-size: 22px; font-weight: 700;
+      width: 80px; height: 80px; background: #1f2937; border: none;
+      border-radius: 50%; font-size: 24px; font-weight: 700;
       color: white; cursor: pointer; transition: background 0.15s;
     }
-    .num-btn:hover  { background: #374151; }
-    .num-btn:active { background: #4b5563; }
-    .num-btn.del { background: #374151; font-size: 18px; }
-    .num-btn.del:hover { background: #ef4444; }
-
-    /* MAIN APP */
-    #appScreen { display: none; }
-    h1 { font-size: 26px; margin-bottom: 5px; }
-    .logout-btn {
-      position: fixed; top: 15px; right: 15px;
-      background: #374151; border: none; color: #9ca3af;
-      padding: 8px 14px; border-radius: 10px; font-size: 13px;
-      cursor: pointer;
+    .num-btn:active { background: #374151; transform: scale(0.95); }
+    .num-btn.zero { grid-column: 2; }
+    .num-btn.del  { background: #374151; font-size: 20px; }
+    .num-btn.del:active { background: #ef4444; }
+    .pin-error {
+      color: #f87171; font-size: 14px; margin-top: 20px;
+      text-align: center; min-height: 20px;
     }
-    .logout-btn:hover { background: #ef4444; color: white; }
+
+    /* APP SCREEN */
+    #appScreen { display: none; padding: 20px; }
+    .container { max-width: 500px; margin: 0 auto; text-align: center; }
+    .lock-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 15px;
+    }
+    .lock-btn {
+      background: #374151; border: none; color: #9ca3af;
+      padding: 8px 14px; border-radius: 10px; font-size: 13px; cursor: pointer;
+    }
+    .lock-btn:hover { background: #ef4444; color: white; }
+    h1 { font-size: 24px; margin-bottom: 5px; }
     .mode-bar { display: flex; gap: 10px; margin: 15px 0; }
     .mode-btn {
       flex: 1; padding: 12px; border: none; border-radius: 12px;
@@ -110,8 +94,6 @@
     .btn-red:hover   { background: #dc2626; }
     .btn-gray  { background: #6b7280; }
     .btn-gray:hover  { background: #4b5563; }
-    .btn-green { background: #10b981; }
-    .btn-green:hover { background: #059669; }
     #scanner-container {
       width: 100%; max-width: 400px; margin: 20px auto;
       border-radius: 20px; overflow: hidden; background: #000; display: none;
@@ -126,12 +108,14 @@
     }
     .status-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; margin: 15px 0; }
     .status-item { padding: 12px; border-radius: 10px; font-weight: 600; font-size: 14px; background: #059669; }
-    .tab-bar { display: flex; gap: 10px; justify-content: center; margin: 15px 0; }
+    .tab-bar { display: flex; gap: 8px; justify-content: center; margin: 15px 0; }
     .tab {
       flex: 1; padding: 10px; border-radius: 10px; border: none;
-      background: #374151; color: white; cursor: pointer; font-size: 15px;
+      background: #374151; color: white; cursor: pointer; font-size: 14px;
     }
     .tab.active { background: #3b82f6; }
+    .tab.matches { background: #4c1d95; }
+    .tab.matches.active { background: #7c3aed; }
     .manual-box { background: #1f2937; border-radius: 16px; padding: 20px; margin: 20px 0; }
     .manual-box input {
       width: 100%; padding: 14px; border-radius: 10px; border: none;
@@ -172,9 +156,10 @@
 </head>
 <body>
 
-  <!-- LOGIN SCREEN -->
+  <!-- LOGIN SCREEN — visible by default -->
   <div id="loginScreen">
-    <img src="logo.jpg" alt="EMC Logo" class="logo-img">
+    <img src="logo.jpg" alt="EMC Logo" class="logo-img"
+         onerror="this.style.display='none'">
     <div class="event-name">ELITE MUAYTHAI CHALLENGE</div>
     <div class="event-sub">Staff Portal · Enter PIN to continue</div>
 
@@ -195,18 +180,19 @@
       <button class="num-btn" onclick="pinPress('7')">7</button>
       <button class="num-btn" onclick="pinPress('8')">8</button>
       <button class="num-btn" onclick="pinPress('9')">9</button>
-      <button class="num-btn" onclick="pinPress('0')" style="grid-column:2;">0</button>
-      <button class="num-btn del" onclick="pinDelete()">⌫</button>
+      <button class="num-btn zero" onclick="pinPress('0')">0</button>
+      <button class="num-btn del"  onclick="pinDelete()">⌫</button>
     </div>
-    <p class="pin-error" id="pinError">❌ Incorrect PIN. Try again.</p>
+    <p class="pin-error" id="pinError"></p>
   </div>
 
-  <!-- MAIN APP SCREEN -->
+  <!-- APP SCREEN — hidden by default -->
   <div id="appScreen">
-    <button class="logout-btn" onclick="logout()">🔒 Lock</button>
     <div class="container">
-      <h1>🏟️ EMC Staff Portal</h1>
-      <p style="color:#9ca3af; margin-bottom:15px; font-size:14px;">Select your role below</p>
+      <div class="lock-bar">
+        <div style="font-size:13px; color:#f59e0b; font-weight:700;">🏟️ EMC Staff Portal</div>
+        <button class="lock-btn" onclick="logout()">🔒 Lock</button>
+      </div>
 
       <div class="mode-bar">
         <button class="mode-btn mode-checkin active" id="modeCheckin" onclick="setMode('checkin')">
@@ -233,15 +219,15 @@
       </div>
 
       <div class="tab-bar">
-        <button class="tab active" id="tabCamera"  onclick="switchTab('camera')">📷 Camera</button>
-        <button class="tab"        id="tabManual"  onclick="switchTab('manual')">⌨️ Manual</button>
-        <button class="tab"        id="tabMatches" onclick="switchTab('matches')" style="background:#7c3aed;">🥊 Matches</button>
+        <button class="tab active"  id="tabCamera"  onclick="switchTab('camera')">📷 Camera</button>
+        <button class="tab"         id="tabManual"  onclick="switchTab('manual')">⌨️ Manual</button>
+        <button class="tab matches" id="tabMatches" onclick="switchTab('matches')">🥊 Matches</button>
       </div>
 
       <!-- Camera Tab -->
       <div id="cameraTab">
         <button class="scan-btn btn-blue" id="startBtn" onclick="startScan()">🎥 Start Camera</button>
-        <button class="scan-btn btn-gray" onclick="stopScan()" id="stopBtn" style="display:none;">⏹️ Stop</button>
+        <button class="scan-btn btn-gray" id="stopBtn"  onclick="stopScan()" style="display:none;">⏹️ Stop</button>
         <div id="scanner-container"></div>
       </div>
 
@@ -257,7 +243,7 @@
       <!-- Matches Tab -->
       <div id="matchesTab" style="display:none;">
         <div class="manual-box">
-          <button class="scan-btn" style="background:#7c3aed;" onclick="loadMatches()">🔄 Load Match Cards</button>
+          <button class="scan-btn" style="background:#7c3aed;" onclick="loadMatches()">🔄 Refresh Matches</button>
         </div>
         <div id="matchResults"></div>
       </div>
@@ -267,13 +253,11 @@
         <div class="medical-form-box">
           <h3>🏥 Medical Assessment</h3>
           <div id="athleteInfo" style="margin-bottom:15px; padding:12px; background:#0f172a; border-radius:10px;"></div>
-
           <div class="form-group">
             <label>Actual Weight (KG) *</label>
             <input type="number" id="actualWeight" placeholder="e.g. 58.5" step="0.1" oninput="checkWeightLive()">
           </div>
           <div class="weight-result w-pending" id="weightResult">⚖️ Enter weight to check</div>
-
           <div class="form-group">
             <label>Blood Pressure *</label>
             <input type="text" id="bloodPressure" placeholder="e.g. 120/80">
@@ -286,7 +270,6 @@
             <label>Medical Notes</label>
             <textarea id="medNotes" placeholder="Observations..."></textarea>
           </div>
-
           <p style="font-weight:600; margin:10px 0;">Medical Clearance *</p>
           <div class="clearance-row">
             <button class="clear-btn clear-yes" id="btnYes" onclick="setClearance(true)">✅ Clear to Fight</button>
@@ -305,29 +288,31 @@
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwww8NjT7dsd3B1jgpBL_0QA197J8vA9PRjbl1T1EruLjyPw-kNV0btaDczVzOCnbmJ/exec';
     const CORRECT_PIN     = '2025';
 
-    let pinEntry       = '';
-    let html5QrCode    = null;
-    let scannerRunning = false;
-    let foundAthletes  = [];
-    let currentAthlete = null;
-    let isCleared      = null;
-    let currentMode    = 'checkin';
+    let pinEntry           = '';
+    let html5QrCode        = null;
+    let scannerRunning     = false;
+    let foundAthletes      = [];
+    let currentAthlete     = null;
+    let isCleared          = null;
+    let currentMode        = 'checkin';
     let currentStaffId     = '';
     let currentStaffName   = '';
     let currentEventFilter = 'All';
 
-    // ---- PIN ----
+    // ---- PIN LOGIC ----
     function pinPress(digit) {
       if (pinEntry.length >= 4) return;
       pinEntry += digit;
       updateDots();
-      if (pinEntry.length === 4) checkPin();
+      if (pinEntry.length === 4) {
+        setTimeout(checkPin, 150);
+      }
     }
 
     function pinDelete() {
       pinEntry = pinEntry.slice(0, -1);
       updateDots();
-      document.getElementById('pinError').style.display = 'none';
+      document.getElementById('pinError').textContent = '';
     }
 
     function updateDots() {
@@ -338,43 +323,46 @@
 
     function checkPin() {
       if (pinEntry === CORRECT_PIN) {
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display   = 'block';
         sessionStorage.setItem('emc_auth', '1');
+        showApp();
       } else {
-        document.getElementById('pinError').style.display = 'block';
+        document.getElementById('pinError').textContent = '❌ Incorrect PIN. Try again.';
         pinEntry = '';
         updateDots();
-        // Shake effect
-        const dots = document.querySelector('.pin-dots');
-        dots.style.animation = 'none';
-        setTimeout(() => { dots.style.animation = ''; }, 10);
       }
+    }
+
+    function showApp() {
+      document.getElementById('loginScreen').style.display = 'none';
+      document.getElementById('appScreen').style.display   = 'block';
+    }
+
+    function showLogin() {
+      document.getElementById('loginScreen').style.display = 'flex';
+      document.getElementById('appScreen').style.display   = 'none';
     }
 
     function logout() {
       sessionStorage.removeItem('emc_auth');
       pinEntry = '';
       updateDots();
-      document.getElementById('pinError').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
-      document.getElementById('appScreen').style.display   = 'none';
+      document.getElementById('pinError').textContent = '';
       stopScan();
+      showLogin();
     }
 
-    // Auto-unlock if already authenticated this session
-    if (sessionStorage.getItem('emc_auth') === '1') {
-      document.getElementById('loginScreen').style.display = 'none';
-      document.getElementById('appScreen').style.display   = 'block';
-    }
-
-    // Keyboard support for PIN
-    document.addEventListener('keydown', function(e) {
-      if (document.getElementById('loginScreen').style.display !== 'none' &&
-          document.getElementById('loginScreen').style.display !== '') {
-        if (e.key >= '0' && e.key <= '9') pinPress(e.key);
-        if (e.key === 'Backspace') pinDelete();
+    // Check session on load
+    window.addEventListener('DOMContentLoaded', function() {
+      if (sessionStorage.getItem('emc_auth') === '1') {
+        showApp();
       }
+      // Keyboard support
+      document.addEventListener('keydown', function(e) {
+        if (document.getElementById('loginScreen').style.display !== 'none') {
+          if (e.key >= '0' && e.key <= '9') pinPress(e.key);
+          if (e.key === 'Backspace') pinDelete();
+        }
+      });
     });
 
     // ---- MODE ----
@@ -382,8 +370,8 @@
       currentMode = mode;
       document.getElementById('modeCheckin').classList.toggle('active', mode === 'checkin');
       document.getElementById('modeMedical').classList.toggle('active', mode === 'medical');
-      document.getElementById('checkinInputs').style.display = mode === 'checkin' ? 'flex' : 'none';
-      document.getElementById('medicalInputs').style.display = mode === 'medical' ? 'flex' : 'none';
+      document.getElementById('checkinInputs').style.display  = mode === 'checkin' ? 'flex' : 'none';
+      document.getElementById('medicalInputs').style.display  = mode === 'medical' ? 'flex' : 'none';
       document.getElementById('medicalFormBox').style.display = 'none';
       document.getElementById('result').style.display         = 'none';
       document.getElementById('searchResults').innerHTML       = '';
@@ -467,7 +455,7 @@
         callback(data);
       };
       script = document.createElement('script');
-      script.src = url.toString();
+      script.src    = url.toString();
       script.onerror = function() {
         clearTimeout(timeout);
         delete window[callbackName];
@@ -507,8 +495,7 @@
         <span style="color:#9ca3af; font-size:13px;">
           ${data.event} | ${data.weightClass}<br>
           Check-in: ${data.checkinStatus}
-        </span>
-      `;
+        </span>`;
       document.getElementById('actualWeight').value       = '';
       document.getElementById('bloodPressure').value      = '';
       document.getElementById('heartRate').value          = '';
@@ -558,10 +545,8 @@
       if (isCleared === null) { alert('Please select clearance status.'); return; }
       if (!document.getElementById('actualWeight').value)  { alert('Please enter actual weight.'); return; }
       if (!document.getElementById('bloodPressure').value) { alert('Please enter blood pressure.'); return; }
-
       document.getElementById('saveMedBtn').disabled    = true;
       document.getElementById('saveMedBtn').textContent = '⏳ Saving...';
-
       const medData = {
         athleteId:     currentAthlete.athleteId,
         fullName:      currentAthlete.fullName,
@@ -575,7 +560,6 @@
         clearedBy:     document.getElementById('medStaffName').value,
         staffName:     document.getElementById('medStaffName').value
       };
-
       callAppsScript({
         action: 'saveMedical', medData: encodeURIComponent(JSON.stringify(medData))
       }, function(result) {
@@ -628,10 +612,10 @@
         confirmed.forEach(m => {
           const readyColor = m.readiness === '🟢 READY'   ? '#065f46' :
                              m.readiness === '🟡 WAITING' ? '#78350f' : '#1e1b4b';
-          const redColor   = m.redCheckin  === '✅ Checked In'      ? '#34d399' :
-                             m.redCheckin  === '⏳ Not Registered'  ? '#f87171' : '#fbbf24';
-          const blueColor  = m.blueCheckin === '✅ Checked In'      ? '#34d399' :
-                             m.blueCheckin === '⏳ Not Registered'  ? '#f87171' : '#fbbf24';
+          const redColor   = m.redCheckin  === '✅ Checked In'     ? '#34d399' :
+                             m.redCheckin  === '⏳ Not Registered' ? '#f87171' : '#fbbf24';
+          const blueColor  = m.blueCheckin === '✅ Checked In'     ? '#34d399' :
+                             m.blueCheckin === '⏳ Not Registered' ? '#f87171' : '#fbbf24';
           html += `
             <div style="background:#1f2937; border-radius:12px; padding:15px; margin:10px 0;">
               <div style="display:flex; justify-content:space-between; margin-bottom:10px; align-items:center;">
@@ -736,7 +720,6 @@
     function showResult(result) {
       const r = document.getElementById('result');
       r.style.display = 'block';
-
       if (result.isMedical) {
         r.innerHTML = `
           <div class="result ${result.cleared ? 'success' : 'error'}">
@@ -749,7 +732,6 @@
           </div>`;
         return;
       }
-
       if (!result.valid) {
         if (result.alreadyCheckedIn) {
           r.innerHTML = `
